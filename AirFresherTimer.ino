@@ -44,7 +44,8 @@ int interval =1000;
 bool bspray=0;
 void loop()
 {
-    if ((previousMillis+interval)==millis()) {
+    if (millis()-previousMillis>interval) {
+      Serial.print(".");
       if(!bspray){
         taskCheck();
         spraying();
