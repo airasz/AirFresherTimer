@@ -9,7 +9,7 @@ bool dutySpray=0;
 int jam_on, menit_on, detik_on, jam_off, menit_off, detik_off;
 // set light task 2
 int jam2_on, menit2_on, detik2_on, jam2_off, menit2_off, detik2_off;
-
+int angkalog=0;
 #define DS3231_I2C_ADDRESS 0x68
 // Convert normal decimal numbers to binary coded decimal
 byte decToBcd(byte val)
@@ -21,14 +21,15 @@ byte bcdToDec(byte val)
 {
 return( (val/16*10) + (val%16) );
 }
+int pinSpray=13;
 void setup(){
     Serial.begin(115200);
     Serial.println("starting timer toilette");
     setSyncProvider(RTC.get);   // the function to get the time from the RTC
-
+    pinMode(pinSpray, OUTPUT);
+    
 //  setTime(0,14,1,6,5,17); h,m,s ,d,m,y
 
-  //DS3231 seconds, minutes, hours, day, date, month, year 
   //setDS3231time(1,23,22,6,26,1,18);
   jam_on=8;
   menit2_on=50;
@@ -36,16 +37,32 @@ void setup(){
   menit2_on=1;
   jam2_off=20;
   menit2_off=30;
-  // setDS3231time(0, 40, 19, 7, 13, 4, 2019);
+  //DS3231 seconds, minutes, hours, day, date, month, year 
+  setDS3231time(0, 40, 19, 7, 13, 4, 2019);
 }
+int interval =1000;
+bool bspray=0;
 void loop()
 {
-    if ((previousMillis+1000)==millis()) {
-      taskCheck();
-      spraying();
-      previousMillis=millis();
+    if ((previousMillis+interval)==millis()) {
+      if(!bspray){
+        taskCheck();
+        spraying();
+        previousMillis=millis();
+      }else{
+        // digitalWrite(pinSpray, HIGH);
+        bspray=0;
+        digitalWrite(pinSpray, LOW);
+        interval=1000;
+        previousMillis=millis();
+      }
     }
     
+}
+void logTime (){
+  Serial.print(hour());
+  Serial.print(":");
+  Serial.println(minute());
 }
 void taskCheck(){
     
@@ -81,6 +98,8 @@ void taskCheck(){
     } else
     {
       dutySpray=false;
+      Serial.println("out of duty");
+      logTime();
     }
     
 
@@ -116,7 +135,13 @@ void taskCheck(){
      secondReach++;
      if (secondReach<2){
        //digitalWrite(pin, HIGH);
-        Serial.println("Spraying");
+        angkalog++;
+        Serial.print("Spraying ");
+        Serial.println(angkalog);
+
+        digitalWrite(pinSpray, HIGH);
+        bspray=1;
+        interval=500;
         
      }else if(secondReach>60){
        secondReach=0;
